@@ -1,4 +1,4 @@
-import { signal } from "@preact/signals";
+import { useSignal } from "@preact/signals";
 import { useEffect, useRef } from "preact/hooks";
 import "./index.css";
 import type { Pokemon } from "./models/pokemon.model";
@@ -7,17 +7,11 @@ import { PokemonGrid } from "./components/PokemonGrid";
 import { PaginationControls } from "./components/PaginationControls";
 
 export function App() {
-  const pokemonListRef = useRef(signal<Pokemon[]>([]));
-  const loadingRef = useRef(signal(false));
-  const errorRef = useRef(signal<string | null>(null));
-  const pageRef = useRef(signal(0));
-  const limitRef = useRef(signal(10));
-
-  const pokemonList = pokemonListRef.current;
-  const loading = loadingRef.current;
-  const error = errorRef.current;
-  const page = pageRef.current;
-  const limit = limitRef.current;
+  const pokemonList = useSignal<Pokemon[]>([]);
+  const loading = useSignal(false);
+  const error = useSignal<string | null>(null);
+  const page = useSignal(0);
+  const limit = useSignal(10);
 
   const svcRef = useRef(new PokemonService());
   const lastFetchId = useRef(0);
@@ -91,7 +85,10 @@ export function App() {
       {loading.value && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="card card-compact bg-base-100 shadow">
+            <div
+              key={`skeleton-${i}`}
+              className="card card-compact bg-base-100 shadow"
+            >
               <div className="skeleton h-40 w-full" />
               <div className="card-body">
                 <div className="skeleton h-6 w-3/4 mb-2" />

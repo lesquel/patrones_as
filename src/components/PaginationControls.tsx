@@ -1,13 +1,13 @@
 import type { Signal } from "@preact/signals";
 
 export function PaginationControls(props: {
-  page: Signal<number>;
-  limit: Signal<number>;
-  loading?: Signal<boolean>;
-  onPrev: () => void;
-  onNext: () => void;
-  onChangeLimit: (v: number) => void;
-  onLoad: () => void;
+  readonly page: Signal<number>;
+  readonly limit: Signal<number>;
+  readonly loading?: Signal<boolean>;
+  readonly onPrev: () => void;
+  readonly onNext: () => void;
+  readonly onChangeLimit: (v: number) => void;
+  readonly onLoad: () => void;
 }) {
   const { page, limit, onPrev, onNext, onChangeLimit, onLoad } = props;
   const loading = props.loading?.value === true;

@@ -8,9 +8,10 @@ import type {
   PokeAPIListResponse,
   PokeAPIListResult,
 } from "../interfaces/pokeapi-list.interface";
+import { AxiosAdapter } from "../adapters/axios.adapter";
 
 export class PokemonService {
-  private readonly http: HttpAdapter = new FetchAdapter();
+  private readonly http: HttpAdapter = new AxiosAdapter();
 
   async getPokemonById(id: number): Promise<Pokemon> {
     const url = `https://pokeapi.co/api/v2/pokemon/${id}`;
@@ -18,50 +19,28 @@ export class PokemonService {
     return PokemonMapper.apiToEntity(data);
   }
 
-  // Fetch paginated list, then request details for each result and map to Pokemon
   async getAllPokemon(pagination: Pagination): Promise<Pokemon[]> {
     const url = `https://pokeapi.co/api/v2/pokemon?limit=${
       pagination.limit
     }&offset=${pagination.limit * pagination.page}`;
 
-    console.log("[PokemonService] fetching:", url);
-    console.log("[PokemonService] pagination:", pagination);
-
     const list = await this.http.get<PokeAPIListResponse<PokeAPIListResult>>(
       url
     );
 
-    // Request each pokemon detail in parallel (be careful with very large limits)
-    // Fetch details in controlled concurrency (batches) to avoid too many parallel requests
     const CONCURRENCY = 5;
     const results: PokeAPIPokemonResponse[] = [];
 
     for (let i = 0; i < list.results.length; i += CONCURRENCY) {
       const chunk = list.results.slice(i, i + CONCURRENCY);
-      console.log(
-        `[PokemonService] fetching details chunk ${i}/${list.results.length}`
+      const chunkDetails = await Promise.all(
+        chunk.map((r) =>
+          this.http.get<PokeAPIPokemonResponse>(r.url).catch(() => null)
+        )
       );
-
-      const promises = chunk.map((r) => {
-        console.log(`[PokemonService] fetch detail start: ${r.url}`);
-        return this.http
-          .get<PokeAPIPokemonResponse>(r.url)
-          .then((d) => {
-            console.log(
-              `[PokemonService] fetch detail ok: ${r.url} -> id=${d.id}`
-            );
-            return d;
-          })
-          .catch((err) => {
-            console.error(`[PokemonService] fetch detail error: ${r.url}`, err);
-            return null as unknown as PokeAPIPokemonResponse;
-          });
-      });
-
-      const chunkDetails = await Promise.all(promises);
-      for (const d of chunkDetails) {
-        if (d) results.push(d);
-      }
+      results.push(
+        ...(chunkDetails.filter(Boolean) as PokeAPIPokemonResponse[])
+      );
     }
 
     return results.map(PokemonMapper.apiToEntity);

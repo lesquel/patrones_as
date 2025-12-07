@@ -1,6 +1,6 @@
 import type { Pokemon } from "../models/pokemon.model";
 
-export function PokemonCard({ p }: { p: Pokemon }) {
+export function PokemonCard({ p }: Readonly<{ p: Pokemon }>) {
   return (
     <div class="card card-compact bg-base-100 shadow">
       {p.avatar ? (
