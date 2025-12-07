@@ -6,7 +6,7 @@ export class AxiosAdapter implements HttpAdapter {
     try {
       const { data } = await axios.get<T>(url);
       return data;
-    } catch (err) {
+    } catch (err: any) {
       throw new Error(`AxiosAdapter GET error: ${String(err)}`);
     }
   }

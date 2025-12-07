@@ -32,12 +32,38 @@ export class PokemonService {
     );
 
     // Request each pokemon detail in parallel (be careful with very large limits)
-    const detailPromises = list.results.map((r) =>
-      this.http.get<PokeAPIPokemonResponse>(r.url)
-    );
+    // Fetch details in controlled concurrency (batches) to avoid too many parallel requests
+    const CONCURRENCY = 5;
+    const results: PokeAPIPokemonResponse[] = [];
 
-    const details = await Promise.all(detailPromises);
+    for (let i = 0; i < list.results.length; i += CONCURRENCY) {
+      const chunk = list.results.slice(i, i + CONCURRENCY);
+      console.log(
+        `[PokemonService] fetching details chunk ${i}/${list.results.length}`
+      );
 
-    return details.map(PokemonMapper.apiToEntity);
+      const promises = chunk.map((r) => {
+        console.log(`[PokemonService] fetch detail start: ${r.url}`);
+        return this.http
+          .get<PokeAPIPokemonResponse>(r.url)
+          .then((d) => {
+            console.log(
+              `[PokemonService] fetch detail ok: ${r.url} -> id=${d.id}`
+            );
+            return d;
+          })
+          .catch((err) => {
+            console.error(`[PokemonService] fetch detail error: ${r.url}`, err);
+            return null as unknown as PokeAPIPokemonResponse;
+          });
+      });
+
+      const chunkDetails = await Promise.all(promises);
+      for (const d of chunkDetails) {
+        if (d) results.push(d);
+      }
+    }
+
+    return results.map(PokemonMapper.apiToEntity);
   }
 }

@@ -8,7 +8,7 @@ export class FetchAdapter implements HttpAdapter {
         throw new Error(`Network response was not ok (${res.status})`);
       const data = await res.json();
       return data as T;
-    } catch (err) {
+    } catch (err: any) {
       throw new Error(`FetchAdapter GET error: ${String(err)}`);
     }
   }
