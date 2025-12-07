@@ -1,7 +1,10 @@
 import { signal } from "@preact/signals";
+import { useEffect } from "preact/hooks";
 import "./index.css";
 import type { Pokemon } from "./models/pokemon.model";
 import { PokemonService } from "./services/pokemon.service";
+import { PokemonGrid } from "./components/PokemonGrid";
+import { PaginationControls } from "./components/PaginationControls";
 
 export function App() {
   const pokemonList = signal<Pokemon[]>([]);
@@ -30,6 +33,12 @@ export function App() {
     }
   };
 
+  useEffect(() => {
+    // fetch initial page on mount
+    void fetchPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const prev = () => {
     if (page.value <= 0) return;
     page.value -= 1;
@@ -51,62 +60,19 @@ export function App() {
     <div style={{ padding: 20 }}>
       <h1>Pokémon (Adapter + Clean Architecture)</h1>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          alignItems: "center",
-          marginBottom: 12,
-        }}
-      >
-        <button onClick={prev} disabled={page.value === 0}>
-          Prev
-        </button>
-        <span>Page: {page.value + 1}</span>
-        <button onClick={next}>Next</button>
-
-        <label style={{ marginLeft: 12 }}>
-          Per page:
-          <input
-            type="number"
-            value={limit.value}
-            min={1}
-            onInput={(e: any) => changeLimit(Number(e.currentTarget.value))}
-            style={{ width: 64, marginLeft: 6 }}
-          />
-        </label>
-
-        <button onClick={() => void fetchPage()} style={{ marginLeft: 12 }}>
-          Load
-        </button>
-      </div>
+      <PaginationControls
+        page={page}
+        limit={limit}
+        onPrev={prev}
+        onNext={next}
+        onChangeLimit={changeLimit}
+        onLoad={() => void fetchPage()}
+      />
 
       {loading.value && <p>Loading...</p>}
       {error.value && <p style={{ color: "red" }}>{error.value}</p>}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-          gap: 12,
-        }}
-      >
-        {pokemonList.value.map((p) => (
-          <div key={p.id} style={{ border: "1px solid #ddd", padding: 8 }}>
-            <p>
-              <strong>{p.name}</strong>
-            </p>
-            <p>#{p.id}</p>
-            {p.avatar && (
-              <img
-                src={p.avatar}
-                alt={p.name}
-                style={{ width: 96, height: 96 }}
-              />
-            )}
-          </div>
-        ))}
-      </div>
+      <PokemonGrid list={pokemonList.value} />
     </div>
   );
 }
