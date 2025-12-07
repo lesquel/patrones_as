@@ -1,8 +1,7 @@
-import type { Signal } from "@preact/signals";
-
 export function PaginationControls(props: {
-  page: Signal<number>;
-  limit: Signal<number>;
+  page: number;
+  limit: number;
+  loading?: boolean;
   onPrev: () => void;
   onNext: () => void;
   onChangeLimit: (v: number) => void;
@@ -19,25 +18,31 @@ export function PaginationControls(props: {
         marginBottom: 12,
       }}
     >
-      <button onClick={onPrev} disabled={page.value === 0}>
+      <button onClick={onPrev} disabled={page === 0}>
         Prev
       </button>
-      <span>Page: {page.value + 1}</span>
-      <button onClick={onNext}>Next</button>
+      <span>Page: {page + 1}</span>
+      <button onClick={onNext} disabled={props.loading === true}>
+        Next
+      </button>
 
       <label style={{ marginLeft: 12 }}>
         Per page:
         <input
           type="number"
-          value={limit.value}
+          value={limit}
           min={1}
           onInput={(e: any) => onChangeLimit(Number(e.currentTarget.value))}
           style={{ width: 64, marginLeft: 6 }}
         />
       </label>
 
-      <button onClick={onLoad} style={{ marginLeft: 12 }}>
-        Load
+      <button
+        onClick={onLoad}
+        style={{ marginLeft: 12 }}
+        disabled={props.loading === true}
+      >
+        {props.loading === true ? "Loading..." : "Load"}
       </button>
     </div>
   );

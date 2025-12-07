@@ -1,5 +1,5 @@
 import { signal } from "@preact/signals";
-import { useEffect } from "preact/hooks";
+import { useEffect, useState, useRef } from "preact/hooks";
 import "./index.css";
 import type { Pokemon } from "./models/pokemon.model";
 import { PokemonService } from "./services/pokemon.service";
@@ -10,26 +10,60 @@ export function App() {
   const pokemonList = signal<Pokemon[]>([]);
   const loading = signal(false);
   const error = signal<string | null>(null);
-  const page = signal(0);
-  const limit = signal(10);
+  const [page, setPage] = useState(0);
+  const [limit, setLimit] = useState(10);
 
   const svc = new PokemonService();
+  const [localList, setLocalList] = useState<Pokemon[]>([]);
+  const lastFetchId = useRef(0);
+  const pending = useRef(false);
 
   const fetchPage = async () => {
+    const myId = ++lastFetchId.current;
     loading.value = true;
     error.value = null;
     try {
       const results = await svc.getAllPokemon({
-        page: page.value,
-        limit: limit.value,
+        page: page,
+        limit: limit,
         total: 0,
       });
-      pokemonList.value = results;
+      console.log(
+        "[App] fetched results:",
+        results.length,
+        "fetchId:",
+        myId,
+        "page:",
+        page,
+        "limit:",
+        limit
+      );
+
+      if (myId === lastFetchId.current) {
+        pokemonList.value = results;
+        setLocalList(results);
+        console.log(
+          "[App] pokemonList.value after set:",
+          pokemonList.value.length,
+          pokemonList
+        );
+        // if a new page was requested while we were loading, trigger it now
+        if (pending.current) {
+          pending.current = false;
+          // schedule next fetch (will read current page)
+          void fetchPage();
+        }
+      } else {
+        console.log("[App] ignored stale results for fetchId:", myId);
+      }
     } catch (err: any) {
-      error.value = err?.message ?? String(err);
-      pokemonList.value = [];
+      if (myId === lastFetchId.current) {
+        error.value = err?.message ?? String(err);
+        pokemonList.value = [];
+        setLocalList([]);
+      }
     } finally {
-      loading.value = false;
+      if (myId === lastFetchId.current) loading.value = false;
     }
   };
 
@@ -40,19 +74,31 @@ export function App() {
   }, []);
 
   const prev = () => {
-    if (page.value <= 0) return;
-    page.value -= 1;
+    if (loading.value) {
+      if (page <= 0) return;
+      setPage((p) => p - 1);
+      pending.current = true;
+      return;
+    }
+    if (page <= 0) return;
+    setPage((p) => p - 1);
     void fetchPage();
   };
 
   const next = () => {
-    page.value += 1;
+    if (loading.value) {
+      setPage((p) => p + 1);
+      pending.current = true;
+      return;
+    }
+    setPage((p) => p + 1);
     void fetchPage();
   };
 
   const changeLimit = (v: number) => {
-    limit.value = Math.max(1, v);
-    page.value = 0;
+    const val = Math.max(1, v);
+    setLimit(val);
+    setPage(0);
     void fetchPage();
   };
 
@@ -63,6 +109,7 @@ export function App() {
       <PaginationControls
         page={page}
         limit={limit}
+        loading={loading.value}
         onPrev={prev}
         onNext={next}
         onChangeLimit={changeLimit}
@@ -72,7 +119,12 @@ export function App() {
       {loading.value && <p>Loading...</p>}
       {error.value && <p style={{ color: "red" }}>{error.value}</p>}
 
-      <PokemonGrid list={pokemonList.value} />
+      <p>Loaded: {pokemonList.value.length}</p>
+      <pre style={{ maxHeight: 200, overflow: "auto" }}>
+        {JSON.stringify(pokemonList.value, null, 2)}
+      </pre>
+
+      <PokemonGrid list={localList} />
     </div>
   );
 }

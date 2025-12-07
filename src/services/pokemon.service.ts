@@ -24,6 +24,9 @@ export class PokemonService {
       pagination.limit
     }&offset=${pagination.limit * pagination.page}`;
 
+    console.log("[PokemonService] fetching:", url);
+    console.log("[PokemonService] pagination:", pagination);
+
     const list = await this.http.get<PokeAPIListResponse<PokeAPIListResult>>(
       url
     );
