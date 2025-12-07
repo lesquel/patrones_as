@@ -10,8 +10,11 @@
   },
   "dependencies": {
     "@preact/signals": "^2.5.1",
+    "@tailwindcss/vite": "^4.1.17",
     "axios": "^1.4.0",
-    "preact": "^10.27.2"
+    "daisyui": "^5.5.8",
+    "preact": "^10.27.2",
+    "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.2",

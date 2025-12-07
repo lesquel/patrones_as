@@ -4,15 +4,11 @@ import type { Signal } from "@preact/signals";
 
 export function PokemonGrid({ list }: { list: Signal<Pokemon[]> }) {
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-        gap: 12,
-      }}
-    >
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {list.value.map((p: Pokemon) => (
-        <PokemonCard p={p} key={p.id} />
+        <div key={p.id} class="p-1">
+          <PokemonCard p={p} />
+        </div>
       ))}
     </div>
   );
