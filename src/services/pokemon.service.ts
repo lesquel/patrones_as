@@ -2,16 +2,16 @@ import type { HttpAdapter } from "../adapters/http-adapter.interface";
 import type { Pokemon } from "../models/pokemon.model";
 import { PokemonMapper } from "../mappers/pokemon.mapper";
 import type { PokeAPIPokemonResponse } from "../interfaces/pokeapi-response.interface";
-import { FetchAdapter } from "../adapters/fetch.adapter";
 import type { Pagination } from "../interfaces/pagination.interface";
 import type {
   PokeAPIListResponse,
   PokeAPIListResult,
 } from "../interfaces/pokeapi-list.interface";
-import { AxiosAdapter } from "../adapters/axios.adapter";
+import axiosAdapter from "../adapters/axios.adapter";
+import { Singleton } from "../utils/singleton";
 
-export class PokemonService {
-  private readonly http: HttpAdapter = new AxiosAdapter();
+export class PokemonService extends Singleton {
+  private readonly http: HttpAdapter = axiosAdapter as unknown as HttpAdapter;
 
   async getPokemonById(id: number): Promise<Pokemon> {
     const url = `https://pokeapi.co/api/v2/pokemon/${id}`;
@@ -57,3 +57,7 @@ export class PokemonService {
     return details.map(PokemonMapper.apiToEntity);
   }
 }
+
+export const pokemonService: PokemonService =
+  PokemonService.getInstance() as unknown as PokemonService;
+export default pokemonService;

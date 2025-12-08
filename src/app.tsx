@@ -2,9 +2,20 @@ import { useSignal } from "@preact/signals";
 import { useEffect, useRef } from "preact/hooks";
 import "./index.css";
 import type { Pokemon } from "./models/pokemon.model";
-import { PokemonService } from "./services/pokemon.service";
+import pokemonService from "./services/pokemon.service";
 import { PokemonGrid } from "./components/PokemonGrid";
 import { PaginationControls } from "./components/PaginationControls";
+
+const SKELETON_KEYS = [
+  "sk-1",
+  "sk-2",
+  "sk-3",
+  "sk-4",
+  "sk-5",
+  "sk-6",
+  "sk-7",
+  "sk-8",
+];
 
 export function App() {
   const pokemonList = useSignal<Pokemon[]>([]);
@@ -13,35 +24,26 @@ export function App() {
   const page = useSignal(0);
   const limit = useSignal(10);
 
-  const svcRef = useRef(new PokemonService());
   const lastFetchId = useRef(0);
 
   const fetchPage = async () => {
-    const myId = ++lastFetchId.current;
+    const id = ++lastFetchId.current;
     loading.value = true;
     error.value = null;
     try {
-      const results = await svcRef.current.getAllPokemon({
+      const results = await pokemonService.getAllPokemon({
         page: page.value,
         limit: limit.value,
         total: 0,
       });
-      if (myId === lastFetchId.current) {
-        pokemonList.value = results;
-        console.log(
-          "[App] assigned pokemonList, length:",
-          pokemonList.value.length
-        );
-      } else {
-        console.log("[App] ignored stale results for fetchId:", myId);
-      }
-    } catch (err: any) {
-      if (myId === lastFetchId.current) {
-        error.value = err?.message ?? String(err);
+      if (id === lastFetchId.current) pokemonList.value = results;
+    } catch (e: any) {
+      if (id === lastFetchId.current) {
+        error.value = e?.message ?? String(e);
         pokemonList.value = [];
       }
     } finally {
-      if (myId === lastFetchId.current) loading.value = false;
+      if (id === lastFetchId.current) loading.value = false;
     }
   };
 
@@ -84,11 +86,8 @@ export function App() {
 
       {loading.value && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={`skeleton-${i}`}
-              className="card card-compact bg-base-100 shadow"
-            >
+          {SKELETON_KEYS.map((k) => (
+            <div key={k} className="card card-compact bg-base-100 shadow">
               <div className="skeleton h-40 w-full" />
               <div className="card-body">
                 <div className="skeleton h-6 w-3/4 mb-2" />

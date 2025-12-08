@@ -1,6 +1,11 @@
 import type { HttpAdapter } from "./http-adapter.interface";
+import { Singleton } from "../utils/singleton";
 
-export class FetchAdapter implements HttpAdapter {
+export class FetchAdapter extends Singleton implements HttpAdapter {
+  protected constructor() {
+    super();
+  }
+
   async get<T>(url: string): Promise<T> {
     try {
       const res = await fetch(url);
@@ -13,3 +18,7 @@ export class FetchAdapter implements HttpAdapter {
     }
   }
 }
+
+// Export default singleton instance for convenience
+export const fetchAdapter = FetchAdapter.getInstance();
+export default fetchAdapter;
