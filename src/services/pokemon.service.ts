@@ -19,6 +19,26 @@ export class PokemonService {
     return PokemonMapper.apiToEntity(data);
   }
 
+  private async fetchDetailsFromResults(
+    results: PokeAPIListResult[],
+    concurrency = 5
+  ): Promise<PokeAPIPokemonResponse[]> {
+    const out: PokeAPIPokemonResponse[] = [];
+
+    for (let i = 0; i < results.length; i += concurrency) {
+      const chunk = results.slice(i, i + concurrency);
+
+      const chunkDetails = await Promise.all(
+        chunk.map((r) =>
+          this.http.get<PokeAPIPokemonResponse>(r.url).catch(() => null)
+        )
+      );
+
+      out.push(...(chunkDetails.filter(Boolean) as PokeAPIPokemonResponse[]));
+    }
+    return out;
+  }
+
   async getAllPokemon(pagination: Pagination): Promise<Pokemon[]> {
     const url = `https://pokeapi.co/api/v2/pokemon?limit=${
       pagination.limit
@@ -29,20 +49,11 @@ export class PokemonService {
     );
 
     const CONCURRENCY = 5;
-    const results: PokeAPIPokemonResponse[] = [];
+    const details = await this.fetchDetailsFromResults(
+      list.results,
+      CONCURRENCY
+    );
 
-    for (let i = 0; i < list.results.length; i += CONCURRENCY) {
-      const chunk = list.results.slice(i, i + CONCURRENCY);
-      const chunkDetails = await Promise.all(
-        chunk.map((r) =>
-          this.http.get<PokeAPIPokemonResponse>(r.url).catch(() => null)
-        )
-      );
-      results.push(
-        ...(chunkDetails.filter(Boolean) as PokeAPIPokemonResponse[])
-      );
-    }
-
-    return results.map(PokemonMapper.apiToEntity);
+    return details.map(PokemonMapper.apiToEntity);
   }
 }
