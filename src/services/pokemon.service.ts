@@ -19,6 +19,12 @@ export class PokemonService extends Singleton {
     return PokemonMapper.apiToEntity(data);
   }
 
+  // Return the raw API response for cases where the UI needs full details
+  async getPokemonByIdRaw(id: number): Promise<PokeAPIPokemonResponse> {
+    const url = `https://pokeapi.co/api/v2/pokemon/${id}`;
+    return this.http.get<PokeAPIPokemonResponse>(url);
+  }
+
   private async fetchDetailsFromResults(
     results: PokeAPIListResult[],
     concurrency = 5

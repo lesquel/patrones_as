@@ -3,19 +3,8 @@ import { useEffect, useRef } from "preact/hooks";
 import "./index.css";
 import type { Pokemon } from "./models/pokemon.model";
 import pokemonService from "./services/pokemon.service";
-import { PokemonGrid } from "./components/PokemonGrid";
 import { PaginationControls } from "./components/PaginationControls";
-
-const SKELETON_KEYS = [
-  "sk-1",
-  "sk-2",
-  "sk-3",
-  "sk-4",
-  "sk-5",
-  "sk-6",
-  "sk-7",
-  "sk-8",
-];
+import { Home } from "./page/home";
 
 export function App() {
   const pokemonList = useSignal<Pokemon[]>([]);
@@ -67,7 +56,6 @@ export function App() {
     limit.value = Math.max(1, v);
     page.value = 0;
   };
-
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-4">
@@ -84,28 +72,7 @@ export function App() {
         onLoad={() => void fetchPage()}
       />
 
-      {loading.value && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-          {SKELETON_KEYS.map((k) => (
-            <div key={k} className="card card-compact bg-base-100 shadow">
-              <div className="skeleton h-40 w-full" />
-              <div className="card-body">
-                <div className="skeleton h-6 w-3/4 mb-2" />
-                <div className="skeleton h-4 w-1/3" />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {error.value && <p className="text-error">{error.value}</p>}
-
-      <div className="mb-4">
-        <span className="font-medium">Loaded:</span>{" "}
-        <span className="ml-2">{pokemonList.value.length}</span>
-      </div>
-
-      <PokemonGrid list={pokemonList} />
+      <Home pokemonList={pokemonList} loading={loading} error={error} />
     </div>
   );
 }

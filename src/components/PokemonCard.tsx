@@ -1,8 +1,14 @@
 import type { Pokemon } from "../models/pokemon.model";
+import eventBus from "../utils/event-bus";
 
 export function PokemonCard({ p }: Readonly<{ p: Pokemon }>) {
+  const onOpen = () => eventBus.emit<number>("pokemon:open", p.id);
+
   return (
-    <div class="card card-compact bg-base-100 shadow">
+    <button
+      onClick={onOpen}
+      class="card card-compact bg-base-100 shadow text-left"
+    >
       {p.avatar ? (
         <figure>
           <img
@@ -16,6 +22,6 @@ export function PokemonCard({ p }: Readonly<{ p: Pokemon }>) {
         <h2 class="card-title">{p.name}</h2>
         <p class="text-sm text-muted">#{p.id}</p>
       </div>
-    </div>
+    </button>
   );
 }
